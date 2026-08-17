@@ -61,7 +61,7 @@ All models are trained on an 80/20 stratified split (1,688 train / 423 test). Pr
 
 ## Live Streamlit App
 
-> ****
+> **https://obesity-level-classification-jbrf68p69cgw4pcxa2wtwy.streamlit.app/**
 
 
 ### App Features
