@@ -35,9 +35,19 @@ def load_scaler():
 def load_label_encoder():
     return joblib.load(os.path.join(MODEL_DIR, "label_encoder.pkl"))
 
-@st.cache_data
-def load_results():
-    return pd.read_csv(os.path.join(MODEL_DIR, "results.csv"), index_col=0)
+def compute_metrics(name, X_test, y_test, scaler):
+    m = load_model(name)
+    X = scaler.transform(X_test) if name in NEEDS_SCALING else X_test.values
+    y_pred = m.predict(X)
+    y_prob = m.predict_proba(X)
+    return {
+        "Accuracy":  round(accuracy_score(y_test, y_pred), 4),
+        "AUC":       round(roc_auc_score(y_test, y_prob, multi_class="ovr", average="macro"), 4),
+        "Precision": round(precision_score(y_test, y_pred, average="weighted", zero_division=0), 4),
+        "Recall":    round(recall_score(y_test, y_pred, average="weighted"), 4),
+        "F1":        round(f1_score(y_test, y_pred, average="weighted"), 4),
+        "MCC":       round(matthews_corrcoef(y_test, y_pred), 4),
+    }
 
 # Sidebar
 with st.sidebar:
@@ -57,32 +67,37 @@ st.markdown("---")
 
 tab1, tab2 = st.tabs(["Model Evaluation", "All Models Comparison"])
 
-with tab2:
-    st.subheader("Model Comparison — All 5 Models on Test Set")
-    results = load_results()
-    st.dataframe(results.style.highlight_max(axis=0, color="#c6efce").highlight_min(axis=0, color="#ffc7ce"),
-                 use_container_width=True)
-
-with tab1:
-    if uploaded_file is None:
+if uploaded_file is None:
+    with tab1:
         st.info("Upload test_data.csv from the sidebar to evaluate the selected model.")
-    else:
-        df = pd.read_csv(uploaded_file)
-        if "target" not in df.columns:
-            st.error("The uploaded file must contain a 'target' column.")
-            st.stop()
+    with tab2:
+        st.info("Upload test_data.csv from the sidebar to see the comparison table.")
+else:
+    df = pd.read_csv(uploaded_file)
+    if "target" not in df.columns:
+        st.error("The uploaded file must contain a 'target' column.")
+        st.stop()
 
-        X_test = df.drop("target", axis=1)
-        y_test = df["target"].astype(int)
+    X_test = df.drop("target", axis=1)
+    y_test = df["target"].astype(int)
+    le     = load_label_encoder()
+    scaler = load_scaler()
+    class_names = le.classes_
 
-        le     = load_label_encoder()
-        model  = load_model(selected_model)
-        scaler = load_scaler()
+    with tab2:
+        st.subheader("All Models — Evaluation on Uploaded Test Set")
+        all_metrics = {name: compute_metrics(name, X_test, y_test, scaler) for name in MODEL_FILES}
+        comparison_df = pd.DataFrame(all_metrics).T
+        st.dataframe(comparison_df.style.background_gradient(cmap="Blues", axis=0),
+                     use_container_width=True)
+        best = comparison_df["Accuracy"].idxmax()
+        st.success(f"Best performing model: **{best}**")
 
-        X_input     = scaler.transform(X_test) if selected_model in NEEDS_SCALING else X_test.values
-        y_pred      = model.predict(X_input)
-        y_prob      = model.predict_proba(X_input)
-        class_names = le.classes_
+    with tab1:
+        model   = load_model(selected_model)
+        X_input = scaler.transform(X_test) if selected_model in NEEDS_SCALING else X_test.values
+        y_pred  = model.predict(X_input)
+        y_prob  = model.predict_proba(X_input)
 
         st.subheader(f"Results for: {selected_model}")
         st.caption(f"{len(df)} test samples | {X_test.shape[1]} features")
