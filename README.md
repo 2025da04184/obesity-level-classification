@@ -56,6 +56,7 @@ All models are trained on an 80/20 stratified split (1,688 train / 423 test). Pr
 | kNN | Lower performance (79.7% accuracy). With 7 closely related classes, finding clear distance boundaries is harder. Sensitive to the value of k and feature scaling. |
 | Naive Bayes | Weakest model (56% accuracy). The independence assumption does not hold well here since features like Height and Weight are correlated with each other. |
 | Random Forest (Ensemble) | Best model overall (95.3% accuracy, 0.9967 AUC). Using 100 trees reduces the overfitting seen in a single Decision Tree and handles the non-linear patterns in the data well. |
+| Overall Winner for this dataset | Random Forest (Ensemble) is the overall winner because it achieved the highest accuracy, AUC, weighted F1, and MCC among all five models. |
 
 ---
 
@@ -82,7 +83,6 @@ ml-assignment-2/
 ├── requirements.txt                # Python dependencies
 ├── README.md                       # This file
 ├── test_data.csv                   # Test split (20% of dataset, 423 rows)
-├── ObesityDataSet_raw_and_data_sinthetic.csv   # Raw dataset (Kaggle)
 └── model/
     ├── train_models.py             # Model training script
     ├── scaler.pkl                  # Fitted StandardScaler
@@ -92,7 +92,6 @@ ml-assignment-2/
     ├── kNN.pkl
     ├── Naive_Bayes.pkl
     ├── Random_Forest.pkl
-    └── results.csv                 # Saved evaluation metrics
 ```
 
 ## How to Run Locally
