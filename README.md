@@ -1,4 +1,4 @@
-# ML Assignment 2 — Obesity Level Classification
+# Obesity Level Classification
 
 ## Problem Statement
 
